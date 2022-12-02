@@ -1,10 +1,7 @@
-import java.io.File
-
-class Puzzle1(private var lines: List<String>) {
-    var max: Int = 0
-
-    fun solve() {
+class Puzzle1 : Puzzle<Int> {
+    override fun solve(lines: List<String>): Int {
         var sum = 0
+        var max = 0
         lines.forEach { line ->
             if (line.isEmpty()) {
                 if (sum > max) {
@@ -15,13 +12,12 @@ class Puzzle1(private var lines: List<String>) {
                 sum += line.toInt()
             }
         }
+        return max
     }
 }
 
 fun main() {
-    val lines = File("src/main/resources/puzzle1.txt").readLines()
-    val puzzle = Puzzle1(lines)
-    puzzle.solve()
+    val result = Puzzle1().solveForFile()
     println("---")
-    println(puzzle.max)
+    println(result)
 }

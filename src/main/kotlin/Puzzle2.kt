@@ -1,6 +1,4 @@
-import java.io.File
-
-class Puzzle2(private var lines: List<String>) {
+class Puzzle2 : Puzzle<Int> {
 
     enum class Result(val score: Int) {
         WIN(6),
@@ -60,16 +58,14 @@ class Puzzle2(private var lines: List<String>) {
         }
     }
 
-    fun solve(): Int {
+    override fun solve(lines: List<String>): Int {
         return lines.map { Round.fromString(it).getScore() }.sum()
     }
 
 }
 
 fun main() {
-    val lines = File("src/main/resources/puzzle2.txt").readLines()
-    val puzzle = Puzzle2(lines)
-    val result = puzzle.solve()
+    val result = Puzzle2().solveForFile()
     println("---")
     println(result)
 }

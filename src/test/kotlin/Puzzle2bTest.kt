@@ -1,19 +1,16 @@
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
+class Puzzle2bTest : BaseTestCase<Int>() {
 
-class Puzzle2bTest {
+    // 12
+    override fun getExampleInput(): List<String> {
+        return Puzzle2Test.PUZZLE_2_INPUT
+    }
 
-    @Test
-    fun testCaseFromExample() {
-        val testedObject = Puzzle2b(
-            listOf(
-                "A Y",
-                "B X",
-                "C Z"
-            )
-        )
-        val result = testedObject.solve()
-        Assertions.assertEquals(12, result)
+    override fun expectedBaseTestCaseResult(): Int {
+        return 12
+    }
+
+    override fun instantiate(): Puzzle<Int> {
+        return Puzzle2b()
     }
 
 }

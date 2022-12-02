@@ -1,10 +1,8 @@
-import java.io.File
+class Puzzle1b : Puzzle<Int> {
+    private var topThree: MutableList<Int> = mutableListOf(0, 0, 0)
+    private var minOfTopThree: Int = 0
 
-class Puzzle1b(private var lines: List<String>) {
-    var topThree: MutableList<Int> = mutableListOf(0, 0, 0)
-    var minOfTopThree: Int = 0
-
-    fun solve(): Int {
+    override fun solve(lines: List<String>): Int {
         var sum = 0
         lines.forEach { line ->
             if (line.isEmpty()) {
@@ -22,7 +20,7 @@ class Puzzle1b(private var lines: List<String>) {
         if (sum > minOfTopThree) promote(sum)
     }
 
-    fun result(): Int {
+    private fun result(): Int {
         return topThree.sum()
     }
 
@@ -34,9 +32,7 @@ class Puzzle1b(private var lines: List<String>) {
 }
 
 fun main() {
-    val lines = File("src/main/resources/puzzle1b.txt").readLines()
-    val puzzle = Puzzle1b(lines)
-    val result = puzzle.solve()
+    val result = Puzzle1b().solveForFile()
     println("---")
     println(result)
 }
