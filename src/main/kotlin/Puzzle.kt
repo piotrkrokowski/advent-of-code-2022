@@ -3,10 +3,16 @@ import java.io.File
 interface Puzzle<T> {
     fun solve(lines: List<String>): T
     fun solveForFile(): T {
-        var baseFileName = this::class.simpleName?.lowercase() ?: throw IllegalStateException()
-        if (baseFileName.endsWith("b"))
-            baseFileName = baseFileName.substringBeforeLast("b")
-
-        return solve(File("src/main/resources/$baseFileName.txt").readLines())
+        return solveForFile({ s -> s })
     }
+
+    fun solveForFile(pathModifier: (String) -> String): T {
+        var path = this::class.simpleName?.lowercase() ?: throw IllegalStateException()
+        if (path.endsWith("b"))
+            path = path.substringBeforeLast("b")
+        path = "src/main/resources/$path.txt"
+        path = pathModifier.invoke(path)
+        return solve(File(path).readLines())
+    }
+
 }

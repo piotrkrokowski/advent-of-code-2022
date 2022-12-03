@@ -23,10 +23,6 @@ class Puzzle1bTest : BaseTestCase<Int>() {
         assertEquals(75, result)
     }
 
-    override fun getExampleInput(): List<String> {
-        return Puzzle1Test.PUZZLE_1_INPUT
-    }
-
     override fun expectedBaseTestCaseResult(): Int {
         return 45000
     }
