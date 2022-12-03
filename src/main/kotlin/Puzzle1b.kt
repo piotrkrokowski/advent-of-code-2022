@@ -1,33 +1,39 @@
 class Puzzle1b : Puzzle<Int> {
-    private var topThree: MutableList<Int> = mutableListOf(0, 0, 0)
-    private var minOfTopThree: Int = 0
+
+    private class State {
+        var topThree: MutableList<Int> = mutableListOf(0, 0, 0)
+        var minOfTopThree: Int = 0
+    }
 
     override fun solve(lines: List<String>): Int {
         var sum = 0
-        lines.forEach { line ->
+        val state = State()
+        for (line in lines) {
             if (line.isEmpty()) {
-                maybePromote(sum)
+                maybePromote(sum, state)
                 sum = 0
             } else {
                 sum += line.toInt()
             }
         }
-        maybePromote(sum)
-        return result()
+        maybePromote(sum, state)
+        return result(state)
     }
 
-    private fun maybePromote(sum: Int) {
-        if (sum > minOfTopThree) promote(sum)
+    private fun maybePromote(sum: Int, state: State) {
+        if (sum > state.minOfTopThree) promote(sum, state)
     }
 
-    private fun result(): Int {
-        return topThree.sum()
+    private fun result(state: State): Int {
+        return state.topThree.sum()
     }
 
-    private fun promote(sum: Int) {
-        topThree.remove(minOfTopThree)
-        topThree.add(sum)
-        minOfTopThree = topThree.min()
+    private fun promote(sum: Int, state: State) {
+        with(state) {
+            topThree.remove(minOfTopThree)
+            topThree.add(sum)
+            minOfTopThree = topThree.min()
+        }
     }
 }
 
