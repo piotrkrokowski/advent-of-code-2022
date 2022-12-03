@@ -2,11 +2,9 @@ class Puzzle1 : Puzzle<Int> {
     override fun solve(lines: List<String>): Int {
         var sum = 0
         var max = 0
-        lines.forEach { line ->
+        for (line in lines) {
             if (line.isEmpty()) {
-                if (sum > max) {
-                    max = sum
-                }
+                if (sum > max) max = sum
                 sum = 0
             } else {
                 sum += line.toInt()

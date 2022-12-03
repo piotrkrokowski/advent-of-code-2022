@@ -3,7 +3,7 @@ import java.io.File
 interface Puzzle<T> {
     fun solve(lines: List<String>): T
     fun solveForFile(): T {
-        return solveForFile({ s -> s })
+        return solveForFile { s -> s }
     }
 
     fun solveForFile(pathModifier: (String) -> String): T {
@@ -12,7 +12,6 @@ interface Puzzle<T> {
             path = path.substringBeforeLast("b")
         path = "src/main/resources/$path.txt"
         path = pathModifier.invoke(path)
-        return solve(File(path).readLines())
+        return solve(File(path).bufferedReader().readLines())
     }
-
 }

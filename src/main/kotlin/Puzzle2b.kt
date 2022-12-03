@@ -20,19 +20,13 @@ class Puzzle2b : Puzzle<Int> {
 
     enum class Move(val opponentCode: String, val score: Int) {
         ROCK("A", 1) {
-            override fun getMoveWhichLoosesWithThisOne(): Move {
-                return SCISSORS
-            }
+            override fun getMoveWhichLoosesWithThisOne(): Move = SCISSORS
         },
         PAPER("B", 2) {
-            override fun getMoveWhichLoosesWithThisOne(): Move {
-                return ROCK
-            }
+            override fun getMoveWhichLoosesWithThisOne(): Move = ROCK
         },
         SCISSORS("C", 3) {
-            override fun getMoveWhichLoosesWithThisOne(): Move {
-                return PAPER
-            }
+            override fun getMoveWhichLoosesWithThisOne(): Move = PAPER
         };
 
         fun beats(move: Move): Boolean {
@@ -49,7 +43,7 @@ class Puzzle2b : Puzzle<Int> {
 
         companion object {
             fun opponentMoveFromString(opponentCode: String): Move {
-                return values().first { it.opponentCode.equals(opponentCode) }
+                return values().first { it.opponentCode == opponentCode }
             }
 
             fun playerGoalFromString(playerGoalString: String): Result {
@@ -71,7 +65,7 @@ class Puzzle2b : Puzzle<Int> {
                 val opponentMove = Move.opponentMoveFromString(split[0])
                 val playerMove = goal.findMoveForOpponentMove(opponentMove)
                 val round = Round(opponentMove, playerMove)
-                println("${round}: ${round.getScore()}")
+                // println("${round}: ${round.getScore()}")
                 return round
             }
         }
