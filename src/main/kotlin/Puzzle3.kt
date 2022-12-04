@@ -27,7 +27,7 @@ class Puzzle3 : Puzzle<Int> {
 }
 
 fun main() {
-    val result = Puzzle3().solveForFile()
+    val result = Puzzle4().solveForFile()
     println("---")
     println(result)
 }
