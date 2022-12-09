@@ -1,6 +1,6 @@
 import kotlin.math.max
 
-open class Puzzle8 : Puzzle<Int> {
+class Puzzle8 : Puzzle<Int> {
 
     companion object {
         var counter: Long = 0

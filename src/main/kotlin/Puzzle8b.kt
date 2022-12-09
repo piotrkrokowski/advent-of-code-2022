@@ -1,4 +1,4 @@
-open class Puzzle8b : Puzzle<Int> {
+class Puzzle8b : Puzzle<Int> {
 
     companion object {
         var counter: Long = 0
