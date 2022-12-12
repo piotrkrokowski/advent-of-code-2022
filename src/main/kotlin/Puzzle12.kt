@@ -1,3 +1,12 @@
+/**
+ * General comment. I've ended up with ellaborate solution with some additional optimizations,
+ * that could have been made more simple if I only implemented basic BFS search with stack
+ * because in fact same node, even if accessed twice is in fact accessed FIRST by the shortest path.
+ * In fact, I did that at the end, but not consciously.
+ * Also - my implementation of BFS was not very elegant. Queue-based implementation would be cleaner and nicer.
+ *
+ * TODO: Perhaps rework one day to a "mainstream" solution.
+ */
 class Puzzle12 : Puzzle<Int> {
 
     class Field {
