@@ -1,4 +1,4 @@
-class Puzzle12 : Puzzle<Int> {
+class Puzzle12b : Puzzle<Int> {
 
     class Field {
         var height: Int = 0
@@ -39,6 +39,15 @@ class Puzzle12 : Puzzle<Int> {
 
         fun getField(currentCoords: Coords): Field {
             return map[currentCoords.row][currentCoords.col]
+        }
+
+        fun findAllLowest(): Set<Coords> {
+            return map.flatMapIndexed { row: Int, fields: Array<Field> ->
+                fields.mapIndexed { col: Int, field: Field -> Pair(Coords(row, col), field.height) }
+            }
+                .filter { it.second == 0 }
+                .map { it.first }
+                .toSet()
         }
     }
 
@@ -104,8 +113,7 @@ class Puzzle12 : Puzzle<Int> {
 
     private fun findPath(map: Map): List<Path> {
         // println(path.visitedNodes)
-
-        var paths: List<Path> = listOf(Path(map.startingPoint, listOf(map.startingPoint), map))
+        var paths: List<Path> = map.findAllLowest().map { Path(it, listOf(it), map) }
         val globalVisitedNodes: MutableSet<Coords> = mutableSetOf(map.startingPoint)
         var iteration = 0
         while (!paths.any { it.success }) {
@@ -113,9 +121,8 @@ class Puzzle12 : Puzzle<Int> {
             paths = paths
                 .flatMap { it.findPossibleSubPathsOneStep(globalVisitedNodes) }
                 .sortedByDescending { it.score() }
-            paths[0].currentCoords
-            if (paths.size > 10_000)
-                paths = paths.dropLast(paths.size / 2)
+//            if (paths.size > 10_000)
+//                paths = paths.dropLast(paths.size / 2)
 //                .onEach { it.draw() }
             iteration++
         }
@@ -148,7 +155,7 @@ class Puzzle12 : Puzzle<Int> {
 }
 
 fun main() {
-    val result = Puzzle12().solveForFile()
+    val result = Puzzle12b().solveForFile()
     println("---")
     println(result)
 }
