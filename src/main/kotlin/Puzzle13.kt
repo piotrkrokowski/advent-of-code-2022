@@ -1,4 +1,4 @@
-class Puzzle13 : Puzzle<Int> {
+open class Puzzle13 : Puzzle<Int> {
 
     class Cursor {
         var position: Int = 0
