@@ -1,11 +1,11 @@
-class Puzzle16Test : BaseTestCase<Int>() {
+class Puzzle16bTest : BaseTestCase<Int>() {
 
     override fun expectedBaseTestCaseResult(): Int {
-        return 1651
+        return 1707
     }
 
     override fun instantiate(): Puzzle<Int> {
-        return Puzzle16()
+        return Puzzle16b()
     }
 
 }
