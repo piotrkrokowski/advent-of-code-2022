@@ -1,84 +1,73 @@
-import kotlin.math.max
-import kotlin.math.min
+import kotlin.math.abs
 
 class Puzzle20 : Puzzle<Int> {
 
-    class Solver(lines: List<String>) {
-        private val values: IntArray
-        private val positions: IntArray
+    data class Element(val value: Int, var moved: Boolean = false)
+
+    class Solver(lines: List<Int>, val dontMoveHigherThan: Int? = null) {
+        private var array: Array<Element>
         private val size: Int
-        private val indexOfZero: Int
+
+        companion object {
+            fun fromLines(lines: List<String>): Solver {
+                return Solver(lines.map { it.toInt() })
+            }
+        }
 
         init {
-            values = lines.map { it.toInt() }.toIntArray()
-            positions = List(lines.size) { index -> index }.toIntArray()
-            size = values.size
-            indexOfZero = values.indexOf(0)
-        }
-
-        fun getAt(position: Int): Int {
-            val positionOfZero = positions[indexOfZero]
-            val positionToGet = (positionOfZero + position) % size
-            val indexToGet = positions.indexOf(positionToGet)
-            return values[indexToGet]
-        }
-
-        fun checkConsistency() {
-            val actual = positions.toSortedSet().reversed()
-            val expected = (0 until size).toSortedSet().reversed()
-            if (!actual.equals(expected)) {
-                val diff = expected - actual
-                render()
-                throw IllegalStateException("Diff: ${diff}")
-            }
+            array = lines.map { Element(it.toInt()) }.toTypedArray()
+            size = array.size
         }
 
         fun solve(): Int {
             // render()
-            for (mainIndex in values.indices) {
-                val value = values[mainIndex]
-                if (value == 0) continue
-                val currentPosition = positions[mainIndex]
-                var newPosition = currentPosition + value
-                if (newPosition >= size) {
-                    newPosition = (newPosition % size) + 1
-                } else if (newPosition <= 0) {
-                    newPosition = size + ((newPosition - 1) % size)
+            var index = 0
+            while (index < array.size) {
+                val element = array[index]
+                if (element.value == 0 || element.moved || (dontMoveHigherThan != null && element.value > dontMoveHigherThan)) {
+                    index++
+                    continue
                 }
-                positions[mainIndex] = newPosition
-                renumberPositionsAfterMovingElement(mainIndex, currentPosition, newPosition)
-                checkConsistency()
+                var newPosition = index + element.value
+                val insertAfter = (element.value > 0)
+                if (newPosition >= size) {
+                    // Figuring it was a nightmare... I must admit, I suck at establishing indexing corner cases :(
+                    val fullRounds = (element.value - 1) / (size - 1)
+                    newPosition = (newPosition + fullRounds) % size
+                } else if (newPosition < 0) {
+                    val fullRounds = (abs(element.value) - 1) / (size - 1)
+                    newPosition = size + ((newPosition - fullRounds) % size)
+                }
+                if (newPosition > index) newPosition--
+                if (insertAfter) newPosition++
+                array = array.copyOfRange(0, index) + array.copyOfRange(index + 1, array.size)
+                array =
+                    array.copyOfRange(0, newPosition) + arrayOf(element) + array.copyOfRange(newPosition, array.size)
+                element.moved = true
                 // render()
             }
-            render()
-            return getAt(1000) + getAt(2000) + getAt(3000)
+            // render()
+            return getAfterZero(1000) + getAfterZero(2000) + getAfterZero(3000)
+        }
+
+        fun getNumbers(): Array<Int> {
+            return array.map { it.value }.toTypedArray()
+        }
+
+        private fun getAfterZero(indexAfterZero: Int): Int {
+            val indexOfZero: Int = array.indexOfFirst { it.value == 0 }
+            return array[(indexOfZero + indexAfterZero) % size].value
         }
 
         private fun render() {
-            val sortedPairsPositionToValue = positions.mapIndexed { index, position -> position to index }
-                .sortedBy { pair -> pair.first }
-                .map { pair -> Pair(pair.first, values[pair.second]) }
-            println(sortedPairsPositionToValue)
-            val joined = sortedPairsPositionToValue.map { it.second }.joinToString(",")
-            println(joined)
+            println(array.toList().map { it.value })
         }
 
-        private fun renumberPositionsAfterMovingElement(movedElementIndex: Int, oldPosition: Int, newPosition: Int) {
-            for (renumbered in values.indices) {
-                if (renumbered == movedElementIndex) continue
-                if (positions[renumbered] in (min(oldPosition, newPosition)..max(oldPosition, newPosition))) {
-                    if (newPosition < oldPosition) {
-                        positions[renumbered]++
-                    } else {
-                        positions[renumbered]--
-                    }
-                }
-            }
-        }
+
     }
 
     override fun solve(lines: List<String>): Int {
-        return Solver(lines).solve()
+        return Solver.fromLines(lines).solve()
     }
 }
 
