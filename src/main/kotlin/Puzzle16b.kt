@@ -1,12 +1,15 @@
 import Graph.Node
 import Graph.OrderedPair
+import java.util.*
 
-// This became a mess :)
+// New best score: 2615, path: [(AA, AA), (LR, OV), (DK, FJ), (ST, EL), (PF, KQ), (MD, JQ), (null, IN)]
+// I don't know what to think of it. I've failed, but I've succeeded ;]
 class Puzzle16b : Puzzle<Int> {
 
     class Volcano : Graph<Valve>() {
 
-        var bestScore = 0
+        var bestScore = 0 // TODO: It doesn't belong here!
+        val simulations: TreeSet<Simulation> = TreeSet() // TODO: It doesn't belong here!
 
         companion object {
             fun fromLines(lines: List<String>): Volcano {
@@ -34,6 +37,7 @@ class Puzzle16b : Puzzle<Int> {
 
         companion object {
             private val REGEX = Regex("Valve ([A-Z]+) has flow rate=(\\d+); tunnels? leads? to valves? ([A-Z, ]+)")
+            val NULL_VALVE = Valve("NULL", 0, emptyList())
 
             fun fromString(string: String): Valve {
                 // println(string)
@@ -44,8 +48,6 @@ class Puzzle16b : Puzzle<Int> {
                 }
             }
         }
-
-
     }
 
     data class Simulation(
@@ -56,51 +58,48 @@ class Puzzle16b : Puzzle<Int> {
         val currentValve: Pair<Valve, Valve>,
         val volcano: Volcano,
         val path: List<Pair<String, String>>
-    ) {
-        var choicesSequence: List<Pair<String, String>> = mutableListOf()
-
+    ) : Comparable<Simulation> {
         fun start(): Simulation {
             // println("Simulation for remainingtime ${playerRemainingTime}, ${elephantRemainingTime}")
             val possiblePlayerMoves = getAllPossibleMoves(currentValve.first, playerRemainingTime)
             val possibleElephantMoves = getAllPossibleMoves(currentValve.second, elephantRemainingTime)
 
-            val possibleCombinations: List<PossibleMovesCombination> =
-                possiblePlayerMoves.flatMap { playerMove ->
-                    possibleElephantMoves
-                        .filter { elephantMove -> elephantMove.valve != playerMove.valve }
-                        .map { elephantMove ->
-                            PossibleMovesCombination(playerMove, elephantMove)
-                        }
-                }
-
 
             val deduplicatedCombinations: List<PossibleMovesCombination> =
-                possibleCombinations.groupingBy { OrderedPair(it.playerMove.valve, it.elephantMove.valve) }
-                    .reduce { _, accumulator: PossibleMovesCombination, element: PossibleMovesCombination ->
-                        if (accumulator.playerMove.distance + accumulator.elephantMove.distance < element.playerMove.distance + element.elephantMove.distance)
-                            accumulator
-                        else
-                            element
+                if (possiblePlayerMoves.isEmpty() && possibleElephantMoves.isNotEmpty()) {
+                    possibleElephantMoves.map { PossibleMovesCombination(null, it) }
+                } else if (possiblePlayerMoves.isNotEmpty() && possibleElephantMoves.isEmpty()) {
+                    possiblePlayerMoves.map { PossibleMovesCombination(it, null) }
+                } else {
+                    val possibleCombinations = possiblePlayerMoves.flatMap { playerMove ->
+                        possibleElephantMoves
+                            .filter { elephantMove -> elephantMove.valve != playerMove.valve }
+                            .map { elephantMove ->
+                                PossibleMovesCombination(playerMove, elephantMove)
+                            }
                     }
-                    .values.toList()
 
-            if (deduplicatedCombinations.isEmpty()) return this
+                    possibleCombinations.groupingBy { OrderedPair(it.playerMove!!.valve, it.elephantMove!!.valve) }
+                        .reduce { _, accumulator: PossibleMovesCombination, element: PossibleMovesCombination ->
+                            if (accumulator.playerMove!!.distance + accumulator.elephantMove!!.distance < element.playerMove!!.distance + element.elephantMove!!.distance)
+                                accumulator
+                            else
+                                element
+                        }
+                        .values.toList()
+                }
 
+            val possibleSimulations = deduplicatedCombinations.map { it.toSimulation(this) }
 
-            val possibleSimulations = deduplicatedCombinations
-                .map { it.runSimulation(this) }
-                .sortedByDescending { it.pressureReleased }
+            volcano.simulations.addAll(possibleSimulations)
+            // start
 
             // println("Simulation on node ${currentValve}")
             // println(possibleSimulations.joinToString("\n"))
-            val bestSimulation = possibleSimulations[0]
-            // println("Choosing $bestSimulation")
-
-            this.merge(bestSimulation)
 
             if (volcano.bestScore < pressureReleased) {
                 volcano.bestScore = pressureReleased
-                println("New best score: $pressureReleased")
+                println("New best score: $pressureReleased, path: ${path}")
             }
 
             // println("$path + $choicesSequence --> $openValves, score: $pressureReleased")
@@ -119,33 +118,33 @@ class Puzzle16b : Puzzle<Int> {
                 .toList()
         }
 
-        private fun merge(bestSimulation: Simulation) {
-            choicesSequence =
-                (listOf(bestSimulation.currentValve).map { it.first.identifier to it.second.identifier }) + bestSimulation.choicesSequence
-            playerRemainingTime = bestSimulation.playerRemainingTime
-            openValves = bestSimulation.openValves
-            pressureReleased = bestSimulation.pressureReleased
+        override fun compareTo(other: Simulation): Int {
+            return other.pressureReleased.compareTo(this.pressureReleased)
         }
 
         override fun toString(): String {
-            return "Simulation(remainingTime=$playerRemainingTime, pressureReleased=$pressureReleased, openValves=$openValves, currentValve=$currentValve, choicesSequence=$choicesSequence)"
+            return "Simulation(remainingTime=$playerRemainingTime, pressureReleased=$pressureReleased, openValves=$openValves, currentValve=$currentValve, path=$path)"
         }
     }
 
-    data class PossibleMovesCombination(val playerMove: PossibleMove, val elephantMove: PossibleMove) {
-        fun runSimulation(parentSimulation: Simulation): Simulation {
+    data class PossibleMovesCombination(val playerMove: PossibleMove?, val elephantMove: PossibleMove?) {
+        fun toSimulation(parentSimulation: Simulation): Simulation {
             val simulation = Simulation(
-                parentSimulation.playerRemainingTime - playerMove.getTimeCost(),
-                parentSimulation.elephantRemainingTime - elephantMove.getTimeCost(),
-                parentSimulation.pressureReleased + playerMove.getOwnScore(parentSimulation.playerRemainingTime) + elephantMove.getOwnScore(
-                    parentSimulation.elephantRemainingTime
-                ),
-                parentSimulation.openValves + playerMove.valve.identifier + elephantMove.valve.identifier,
-                Pair(playerMove.valve, elephantMove.valve),
+                parentSimulation.playerRemainingTime - (playerMove?.getTimeCost() ?: 0),
+                parentSimulation.elephantRemainingTime - (elephantMove?.getTimeCost() ?: 0),
+                parentSimulation.pressureReleased
+                        + (playerMove?.getOwnScore(parentSimulation.playerRemainingTime) ?: 0)
+                        + (elephantMove?.getOwnScore(parentSimulation.elephantRemainingTime) ?: 0),
+                parentSimulation.openValves
+                        + (if (playerMove != null) setOf(playerMove.valve.identifier) else emptySet())
+                        + (if (elephantMove != null) setOf(elephantMove.valve.identifier) else emptySet()),
+                Pair(playerMove?.valve ?: Valve.NULL_VALVE, elephantMove?.valve ?: Valve.NULL_VALVE),
                 parentSimulation.volcano,
-                parentSimulation.path + Pair(playerMove.valve.identifier, elephantMove.valve.identifier)
+                parentSimulation.path + Pair(
+                    playerMove?.valve?.identifier ?: "null",
+                    elephantMove?.valve?.identifier ?: "null"
+                )
             )
-            simulation.start()
             return simulation
         }
     }
@@ -168,10 +167,25 @@ class Puzzle16b : Puzzle<Int> {
         val volcano = Volcano.fromLines(lines)
         volcano.calculateDistances()
         val startingPoint = volcano["AA"]!!
-        val simulation = Simulation(
-            30 - 4, 30 - 4, 0, mutableSetOf(), startingPoint to startingPoint, volcano, listOf(Pair("AA", "AA"))
-        ).start()
-        return simulation.pressureReleased
+        volcano.simulations.add(
+            Simulation(
+                30 - 4, 30 - 4, 0, mutableSetOf(), startingPoint to startingPoint, volcano, listOf(Pair("AA", "AA"))
+            )
+        )
+        var counter = 0L
+        while (volcano.simulations.isNotEmpty()) {
+            val simulation = volcano.simulations.pollFirst()
+            // println(simulation)
+            simulation.start()
+            if (counter++ % 100_000L == 0L) {
+                println("Hello, these are your stats:")
+                println("Top score: ${volcano.bestScore}")
+                println("Simulations processed: $counter")
+                println("Queue size: ${volcano.simulations.size}")
+                println("Top score from top: ${volcano.simulations.first().pressureReleased}")
+            }
+        }
+        return volcano.bestScore
     }
 
 }

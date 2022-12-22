@@ -50,10 +50,13 @@ open class Graph<T : Node<T>> {
         }
 
         companion object {
-            operator fun <T : Node<T>> invoke(from: T, to: T): OrderedPair<T> {
-                val lower = if (from <= to) from else to
-                val greater = if (from > to) from else to
-                return OrderedPair(lower, greater)
+            operator fun <T : Node<T>> invoke(from: T?, to: T?): OrderedPair<T> {
+                if (from == null) return OrderedPair(to, null)
+                else if (to == null) return OrderedPair(from, null) else {
+                    val lower = if (from <= to) from else to
+                    val greater = if (from > to) from else to
+                    return OrderedPair(lower, greater)
+                }
             }
         }
 
