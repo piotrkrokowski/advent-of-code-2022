@@ -73,7 +73,7 @@ class Puzzle16 : Puzzle<Int> {
 
             this.merge(bestSimulation)
 
-            return bestSimulation
+            return this
         }
 
         private fun merge(bestSimulation: Simulation) {

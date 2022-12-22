@@ -43,6 +43,26 @@ open class Graph<T : Node<T>> {
 
     }
 
+    data class OrderedPair<T : Node<T>> private constructor(val from: T, val to: T) {
+
+        override fun toString(): String {
+            return "[${from.identifier} -> ${to.identifier}]"
+        }
+
+        companion object {
+            operator fun <T : Node<T>> invoke(from: T?, to: T?): OrderedPair<T> {
+                if (from == null) return OrderedPair(to, null)
+                else if (to == null) return OrderedPair(from, null) else {
+                    val lower = if (from <= to) from else to
+                    val greater = if (from > to) from else to
+                    return OrderedPair(lower, greater)
+                }
+            }
+        }
+
+
+    }
+
     data class Connection<T : Node<T>> constructor(val to: T, var distance: Int)
 
     open class Node<T : Node<T>>(
