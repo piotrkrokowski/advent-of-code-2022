@@ -1,7 +1,6 @@
 import Puzzle22.*
 import org.fest.assertions.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.io.File
 
 class Puzzle22Test : BaseTestCase<Int>() {
 
@@ -43,5 +42,5 @@ class Puzzle22Test : BaseTestCase<Int>() {
         assertThat(result).isEqualTo(95358)
     }
 
-    private fun readLines() = File("src/test/resources/puzzle22-example.txt").bufferedReader().readLines()
+
 }

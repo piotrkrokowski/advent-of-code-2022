@@ -7,11 +7,16 @@ interface Puzzle<T> {
     }
 
     fun solveForFile(pathModifier: (String) -> String): T {
+        val path = getPath(pathModifier)
+        return solve(File(path).bufferedReader().readLines())
+    }
+
+    fun getPath(pathModifier: (String) -> String): String {
         var path = this::class.simpleName?.lowercase() ?: throw IllegalStateException()
         if (path.endsWith("b"))
             path = path.substringBeforeLast("b")
         path = "src/main/resources/$path.txt"
         path = pathModifier.invoke(path)
-        return solve(File(path).bufferedReader().readLines())
+        return path
     }
 }

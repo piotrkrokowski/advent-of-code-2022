@@ -1,5 +1,6 @@
 import org.fest.assertions.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.io.File
 
 abstract class BaseTestCase<T> {
     @Test
@@ -25,4 +26,11 @@ abstract class BaseTestCase<T> {
     abstract fun expectedBaseTestCaseResult(): T
 
     abstract fun instantiate(): Puzzle<T>
+
+    protected fun readLines(): List<String> {
+        val path = instantiate().getPath { pathModifier(it) }
+        return readLines(path)
+    }
+
+    private fun readLines(path: String) = File(path).bufferedReader().readLines()
 }
