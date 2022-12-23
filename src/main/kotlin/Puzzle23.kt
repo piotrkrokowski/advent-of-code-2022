@@ -2,7 +2,7 @@ import Puzzle23.Direction.N
 import kotlin.math.max
 import kotlin.math.min
 
-class Puzzle23 : Puzzle<Int> {
+open class Puzzle23 : Puzzle<Int> {
 
     data class Coords(val x: Int, val y: Int) {
         fun lookaround(): Set<Coords> {
@@ -71,6 +71,7 @@ class Puzzle23 : Puzzle<Int> {
             if (plannedMove == null || field.claims[plannedMove]!! > 1) {
                 // Call it off, move conflict
             } else {
+                field.elvesMoved = true
                 field.positions.remove(coords)
                 coords = plannedMove!!
                 registerCurrentPositionInField()
@@ -87,6 +88,7 @@ class Puzzle23 : Puzzle<Int> {
         val directionRotator = DirectionRotator()
         val positions: MutableMap<Coords, Elf> = HashMap()
         val claims: MutableMap<Coords, Int> = HashMap()
+        var elvesMoved = false
         private val elves: MutableList<Elf> = mutableListOf()
         private var initialMaxX = 0
         private var initialMaxY = 0
@@ -104,6 +106,7 @@ class Puzzle23 : Puzzle<Int> {
         }
 
         fun executeRound() {
+            elvesMoved = false
             claims.clear()
             elves.forEach { it.plan() }
             elves.forEach { it.move() }
