@@ -191,7 +191,6 @@ class Puzzle24 : Puzzle<Int> {
             val checkedCombination = simulation.getCheckedCombination()
             if (!alreadyCheckedCombinations.contains(checkedCombination)) {
                 alreadyCheckedCombinations.add(checkedCombination)
-                printStatus(simulation)
                 val options = simulation.calculateOptions()
                 val (winning, remaining) = options.partition { it.isWon() }
                 winning.forEach { recordIfBest(it) }
@@ -203,15 +202,6 @@ class Puzzle24 : Puzzle<Int> {
         }
 
         return bestWinningSimulation?.round ?: throw IllegalStateException("No solution found")
-    }
-
-    private fun printStatus(simulation: PlayerSimulation) {
-        if (counter % 1_000_000 == 0) {
-            println("--- Status report ---")
-            println("Simulations queue: ${simulations.size}")
-            println("Considered simulation: $simulation")
-            println("Top three: ${simulations.take(3)}")
-        }
     }
 
     private fun recordIfBest(winningSimulation: PlayerSimulation) {

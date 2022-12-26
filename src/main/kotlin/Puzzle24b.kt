@@ -190,7 +190,6 @@ class Puzzle24b : Puzzle<Int> {
                 val checkedCombination = simulation.getCheckedCombination()
                 if (!alreadyCheckedCombinations.contains(checkedCombination)) {
                     alreadyCheckedCombinations.add(checkedCombination)
-                    printStatus(simulation)
                     val options = simulation.calculateOptions()
                     val (winning, remaining) = options.partition { it.hasReachedDestination() }
                     winning.forEach { recordIfBest(it) }
@@ -208,15 +207,6 @@ class Puzzle24b : Puzzle<Int> {
             if (bestWinningSimulation == null || bestWinningSimulation!!.round > winningSimulation.round) {
                 println("New best score! $winningSimulation")
                 bestWinningSimulation = winningSimulation
-            }
-        }
-
-        private fun printStatus(simulation: PlayerSimulation) {
-            if (counter % 1_000_000 == 0) {
-                println("--- Status report ---")
-                println("Simulations queue: ${simulations.size}")
-                println("Considered simulation: $simulation")
-                println("Top three: ${simulations.take(3)}")
             }
         }
     }
