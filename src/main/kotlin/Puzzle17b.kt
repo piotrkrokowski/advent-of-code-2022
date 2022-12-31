@@ -1,10 +1,11 @@
 import Puzzle17b.Direction.DOWN
 
-class Puzzle17b(val iterations: Long) : Puzzle<Long> {
+class Puzzle17b : Puzzle<Long> {
 
     companion object {
         const val CAVE_WIDTH = 7
-        const val ITERATIONS = 1_000_000_000_000
+        const val ITERATIONS = 1000000000000L
+//        const val ITERATIONS = 2022L
     }
 
     enum class Direction(val vector: Coord) {
@@ -17,7 +18,7 @@ class Puzzle17b(val iterations: Long) : Puzzle<Long> {
         }
     }
 
-    data class Coord(val y: Long, val x: Long) {
+    data class Coord(val y: Long, val x: Int) {
         fun move(direction: Direction): Coord {
             return move(direction.vector)
         }
@@ -35,8 +36,8 @@ class Puzzle17b(val iterations: Long) : Puzzle<Long> {
         SQUARE(listOf(Coord(0, 0), Coord(0, 1), Coord(1, 0), Coord(1, 1)));
 
         companion object {
-            fun nextShape(index: Long): Shape {
-                return values()[(index % values().size).toInt()]
+            fun nextShape(index: Int): Shape {
+                return values()[index % values().size]
             }
         }
     }
@@ -59,7 +60,7 @@ class Puzzle17b(val iterations: Long) : Puzzle<Long> {
         }
 
         private fun applyDownMove() {
-            if (doesCollideAfterMove(Direction.DOWN)) {
+            if (doesCollideAfterMove(DOWN)) {
                 solidify()
             } else {
                 doMove(DOWN)
@@ -93,34 +94,29 @@ class Puzzle17b(val iterations: Long) : Puzzle<Long> {
         }
     }
 
+    data class TowerStateAtPotentialIteration(val iteration: Long, val height: Long)
+
+    data class SurfaceShape(val relativeColumnHeights: MutableList<Long> = mutableListOf(0, 0, 0, 0, 0, 0, 0))
+
     class Cave(jetsString: String) {
         val jetsSequence: List<Direction>
-        var solidifiedRocksCoords: MutableSet<Coord> = mutableSetOf()
-        var topMostElement = -1L
-        var hiddenHeight = 0L
-        var rocksCounter = 0L
-        var jetsIndex = 0
+        val storedRelativeSurfaceHeightsToTurns: MutableMap<SurfaceShape, TowerStateAtPotentialIteration> = mutableMapOf()
+        private val solidifiedRocksCoords: MutableSet<Coord> = mutableSetOf()
+        var height: Long = 0L
+        private val surfaceShape: SurfaceShape = SurfaceShape()
+        private var rocksCounter = 0
+        private var jetsIndex = 0
 
         fun spawnRock(): Rock {
-            if (jetsIndex == 0 && rocksCounter % 5 == 0L) {
-                println("trap")
-            }
-            if (jetsIndex == 0) {
-                println(Shape.nextShape(rocksCounter))
-                println(rocksCounter)
-            }
-
-//            if (topMostElement > 5) reduce()
             // println("Spawning rock ${rocksCounter + 1}")
-            val spawnCoords = Coord(topMostElement + 3 + 1, 2)
+            val spawnCoords = Coord(height + 3, 2)
             val shape = Shape.nextShape(rocksCounter++)
+            if (rocksCounter == Shape.values().size) rocksCounter = 0
             return Rock(shape, spawnCoords, this)
         }
 
         fun getNextJetDirection(): Direction {
-            val retVal = jetsSequence[jetsIndex++]
-            if (jetsIndex == jetsSequence.size) jetsIndex = 0
-            return retVal
+            return jetsSequence[(jetsIndex++) % jetsSequence.size]
         }
 
         fun isOccupied(coord: Coord): Boolean {
@@ -128,34 +124,32 @@ class Puzzle17b(val iterations: Long) : Puzzle<Long> {
         }
 
         fun addSolidifiedRockElement(coord: Coord) {
-            if (coord.y > topMostElement) topMostElement = coord.y
+            if (coord.y + 1 > height) height = coord.y + 1
+            if (coord.y + 1 > surfaceShape.relativeColumnHeights[coord.x]) surfaceShape.relativeColumnHeights[coord.x] = coord.y + 1
             solidifiedRocksCoords += coord
         }
 
-        fun getHeight(): Long {
-            return topMostElement + 1 + hiddenHeight
+        fun getRelativeSurfaceShape(): SurfaceShape {
+            return SurfaceShape(surfaceShape.relativeColumnHeights.map { it - height }.toMutableList())
         }
 
-//        private fun reduce() {
-//            val reduceBy = topMostElement - 5
-//            if (reduceBy > 0) {
-//                solidifiedRocksCoords = solidifiedRocksCoords
-//                    .map { it.move(Coord(-reduceBy, 0)) }
-//                    .filter { it.y >= 0 }
-//                    .toMutableSet()
-//                hiddenHeight += reduceBy
-//                topMostElement -= reduceBy
-//            }
+        fun recordRelativeSurfaceShapeAndReturnPreviousStateIfCycleMatches(iteration: Long): TowerStateAtPotentialIteration? {
+            val shape = getRelativeSurfaceShape()
+            if (storedRelativeSurfaceHeightsToTurns.contains(shape)) {
+                return storedRelativeSurfaceHeightsToTurns[shape]!!
+            }
+            storedRelativeSurfaceHeightsToTurns.put(shape, TowerStateAtPotentialIteration(iteration, height))
+            return null
+        }
+
+//        fun render() {
+//            val lines:Array<Long> = Array(height) { CharArray(CAVE_WIDTH) { ' ' } }
+//            solidifiedRocksCoords.forEach { lines[it.y][it.x] = '#' }
+//            println("---------")
+//            lines.reverse()
+//            lines.forEach { println("|" + String(it) + "|") }
+//            println("+-------+")
 //        }
-
-        fun render() {
-            val lines = Array(topMostElement.toInt() + 1) { CharArray(CAVE_WIDTH) { ' ' } }
-            solidifiedRocksCoords.forEach { lines[it.y.toInt()][it.x.toInt()] = '#' }
-            println("---------")
-            lines.reverse()
-            lines.forEach { println("|" + String(it) + "|") }
-            println("+-------+")
-        }
 
         init {
             jetsSequence = jetsString.map { Direction.fromChar(it) }
@@ -164,28 +158,40 @@ class Puzzle17b(val iterations: Long) : Puzzle<Long> {
 
     override fun solve(lines: List<String>): Long {
         val cave = Cave(lines[0])
-        var knownProblems: MutableList<Set<Coord>> = mutableListOf()
-        var previousKnownProblemTopMostElement = 0L
-        // Basically it's about finding a reapeatable subproblem, that has same starting jet sequence index, shape and same "bottom of cave".
-        // Then ignoring all the iterations that fit within the upper bound and calculating the remaining part
-        // It would just require refactoring and - notably - reducing the bottom of the cave.
-        // It would take too much time to solve it right now :( so I'm leaving it for later.
-        for (i in 0 until iterations) {
-            if (cave.jetsIndex == 0 && cave.rocksCounter % 5L == 0L) {
-                println("TRAP - repeatable problem")
-                previousKnownProblemTopMostElement = cave.topMostElement
-                cave.render()
-                knownProblems += cave.solidifiedRocksCoords
+        var iterationToJumpTo: Long = ITERATIONS
+        var heightToAdd: Long = 0
+        for (i in 0 until ITERATIONS) {
+            // println("Height at start of iteration ${i}: ${cave.height}")
+            if (i % Shape.values().size == 0L && i % cave.jetsSequence.size == 0L) {
+                println("Potential cycle ${i}")
+                val towerStateAtPotentialIteration = cave.recordRelativeSurfaceShapeAndReturnPreviousStateIfCycleMatches(i)
+                if (towerStateAtPotentialIteration != null) {
+                    println("FULL CYCLE FOUND!!! iteration=${i}, ${towerStateAtPotentialIteration}")
+                    val cycleLength = i - towerStateAtPotentialIteration.iteration
+                    val fullCyclesToSkip = (ITERATIONS - i) / cycleLength
+                    val iterationsToSkip = fullCyclesToSkip * cycleLength
+                    iterationToJumpTo = i + iterationsToSkip
+                    println("Skipping $iterationsToSkip iterations")
+                    heightToAdd = (cave.height - towerStateAtPotentialIteration.height) * fullCyclesToSkip
+                    break
+                }
             }
             cave.spawnRock().simulate()
+            // cave.render()
         }
-        //cave.render()
-        return cave.getHeight()
+        for (i in iterationToJumpTo until ITERATIONS) {
+            // println("Running last set of iterations: Iteration ${i}")
+            cave.spawnRock().simulate()
+        }
+        return cave.height + heightToAdd
     }
 }
 
+
+// 1575917611359 is too low ;[
+// 1575931232076 is the right answer
 fun main() {
-    val result = Puzzle17b(Puzzle17b.ITERATIONS).solveForFile()
+    val result = Puzzle17b().solveForFile()
     println("---")
     println(result)
 }
